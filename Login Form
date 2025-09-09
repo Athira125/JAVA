@@ -1,0 +1,57 @@
+ import javax.swing.*;
+ import java.awt.event.*;
+ import java.sql.*;
+ public class LoginForm extends JFrame {
+    private JTextField txtUser;
+    private JPasswordField txtPass;
+    private JButton btnLogin;
+    public LoginForm() {
+        setTitle("Furniture Shop - Login");
+        setSize(300, 200);
+        setLayout(null);
+        JLabel lblUser = new JLabel("Username:");
+        lblUser.setBounds(20, 20, 80, 25);
+        add(lblUser);
+        txtUser = new JTextField();
+        txtUser.setBounds(100, 20, 160, 25);
+        add(txtUser);
+        JLabel lblPass = new JLabel("Password:");
+        lblPass.setBounds(20, 60, 80, 25);
+        add(lblPass);
+        txtPass = new JPasswordField();
+        txtPass.setBounds(100, 60, 160, 25);
+        add(txtPass);
+        btnLogin = new JButton("Login");
+        btnLogin.setBounds(100, 100, 80, 25);
+        add(btnLogin);
+        btnLogin.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                login();
+            }
+        });
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setVisible(true);
+    }
+    private void login() {
+        String user = txtUser.getText();
+        String pass = new String(txtPass.getPassword());
+        try (Connection conn = DBConnection.getConnection()) {
+            String sql = "SELECT * FROM users WHERE username=? AND password=?";
+            PreparedStatement stmt = conn.prepareStatement(sql);
+            stmt.setString(1, user);
+            stmt.setString(2, pass);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                JOptionPane.showMessageDialog(this, "Login successful");
+                // TODO: Open Dashboard
+            } else {
+                JOptionPane.showMessageDialog(this, "Invalid credentials");
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(LoginForm::new);
+    }
+ }
