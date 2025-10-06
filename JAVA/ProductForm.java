@@ -1,0 +1,132 @@
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import java.awt.*;
+import java.util.List;
+
+// ...existing code...
+
+
+public class ProductForm extends JFrame {
+    private JTable productTable;
+    private DefaultTableModel model;
+    private ProductDAO productDAO;
+
+    public ProductForm() {
+    setTitle("Manage Products");
+    setSize(700, 500);
+    setLayout(new BorderLayout());
+
+    model = new DefaultTableModel(new Object[]{"ID", "Name", "Category", "Price", "Quantity"}, 0);
+    productTable = new JTable(model);
+    add(new JScrollPane(productTable), BorderLayout.CENTER);
+
+    JPanel buttonPanel = new JPanel();
+    JButton addBtn = new JButton("Add");
+    JButton updateBtn = new JButton("Update");
+    JButton deleteBtn = new JButton("Delete");
+    buttonPanel.add(addBtn);
+    buttonPanel.add(updateBtn);
+    buttonPanel.add(deleteBtn);
+    add(buttonPanel, BorderLayout.SOUTH);
+
+    addBtn.addActionListener(e -> addProduct());
+    updateBtn.addActionListener(e -> updateProduct());
+    deleteBtn.addActionListener(e -> deleteProduct());
+
+    productDAO = new ProductDAO();
+    loadProducts();
+    setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    setVisible(true);
+    }
+
+    private void loadProducts() {
+        model.setRowCount(0);
+        List<Object[]> products = productDAO.getAllProducts();
+        for (Object[] row : products) {
+            model.addRow(row);
+        }
+    }
+
+    // Table creation is handled by ProductDAO
+
+    private void addProduct() {
+        JTextField nameField = new JTextField();
+        JTextField categoryField = new JTextField();
+        JTextField priceField = new JTextField();
+        JTextField quantityField = new JTextField();
+        Object[] fields = {
+                "Name:", nameField,
+                "Category:", categoryField,
+                "Price:", priceField,
+                "Quantity:", quantityField
+        };
+        int result = JOptionPane.showConfirmDialog(this, fields, "Add Product", JOptionPane.OK_CANCEL_OPTION);
+        if (result == JOptionPane.OK_OPTION) {
+            try {
+                String name = nameField.getText();
+                String category = categoryField.getText();
+                double price = Double.parseDouble(priceField.getText());
+                int quantity = Integer.parseInt(quantityField.getText());
+                productDAO.addProduct(name, category, price, quantity);
+                loadProducts();
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(this, "Invalid price or quantity.");
+            }
+        }
+    }
+
+    private void updateProduct() {
+        int selectedRow = productTable.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Select a product to update.");
+            return;
+        }
+        int id = (int) model.getValueAt(selectedRow, 0);
+        String currentName = (String) model.getValueAt(selectedRow, 1);
+        String currentCategory = (String) model.getValueAt(selectedRow, 2);
+        double currentPrice = Double.parseDouble(model.getValueAt(selectedRow, 3).toString());
+        int currentQuantity = Integer.parseInt(model.getValueAt(selectedRow, 4).toString());
+
+        JTextField nameField = new JTextField(currentName);
+        JTextField categoryField = new JTextField(currentCategory);
+        JTextField priceField = new JTextField(String.valueOf(currentPrice));
+        JTextField quantityField = new JTextField(String.valueOf(currentQuantity));
+        Object[] fields = {
+                "Name:", nameField,
+                "Category:", categoryField,
+                "Price:", priceField,
+                "Quantity:", quantityField
+        };
+        int result = JOptionPane.showConfirmDialog(this, fields, "Update Product", JOptionPane.OK_CANCEL_OPTION);
+        if (result == JOptionPane.OK_OPTION) {
+            try {
+                String name = nameField.getText();
+                String category = categoryField.getText();
+                double price = Double.parseDouble(priceField.getText());
+                int quantity = Integer.parseInt(quantityField.getText());
+                productDAO.updateProduct(id, name, category, price, quantity);
+                loadProducts();
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(this, "Invalid price or quantity.");
+            }
+        }
+    }
+
+    private void deleteProduct() {
+        int selectedRow = productTable.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Select a product to delete.");
+            return;
+        }
+        int id = (int) model.getValueAt(selectedRow, 0);
+        int confirm = JOptionPane.showConfirmDialog(this, "Are you sure you want to delete this product?", "Delete", JOptionPane.YES_NO_OPTION);
+        if (confirm == JOptionPane.YES_OPTION) {
+            productDAO.deleteProduct(id);
+            loadProducts();
+        }
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(ProductForm::new);
+    }
+}
